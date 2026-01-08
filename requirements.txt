@@ -1,0 +1,13 @@
+# Activator 依赖清单
+
+# HTTP客户端（支持异步）
+httpx>=0.27.0
+
+# CLI框架
+typer>=0.12.0
+
+# YAML配置文件支持
+pyyaml>=6.0
+
+# 日志库
+loguru>=0.7.0
