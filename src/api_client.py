@@ -97,8 +97,11 @@ class BaseAPIClient(ABC):
         request_data = self.build_request(tokens)
         headers = self.get_headers()
 
+        # 使用规范化后的URL
+        target_url = self.config.api.get_normalized_url()
+
         response = await self.client.post(
-            self.config.api.url,
+            target_url,
             json=request_data,
             headers=headers
         )

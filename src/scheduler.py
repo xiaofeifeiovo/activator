@@ -87,7 +87,7 @@ class ActivatorScheduler:
                 # 记录成功日志
                 next_time = calculate_next_run_time(self.config.activator.interval)
                 log_activation_success(
-                    url=self.config.api.url,
+                    url=self.config.api.get_normalized_url(),
                     model=self.config.api.model,
                     tokens=tokens,
                     response_data=response,
@@ -111,7 +111,7 @@ class ActivatorScheduler:
         logger.info("=" * 60)
         logger.info("Activator 调度器启动")
         logger.info(f"接口类型: {self.config.api.interface_type}")
-        logger.info(f"API端点: {self.config.api.url}")
+        logger.info(f"API端点: {self.config.api.get_normalized_url()}")
         logger.info(f"模型: {self.config.api.model}")
         logger.info(f"请求间隔: {self.config.activator.interval} 小时")
         logger.info(f"Token数量: {self.config.activator.tokens}")

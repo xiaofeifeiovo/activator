@@ -8,7 +8,110 @@
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
+from urllib.parse import urlparse, urlunparse
 import yaml
+import logging
+
+
+class URLNormalizer:
+    """URL规范化工具类"""
+
+    # 已知的完整endpoint路径
+    KNOWN_ENDPOINTS = [
+        "/chat/completions",  # OpenAI
+        "/messages",          # Anthropic
+    ]
+
+    @staticmethod
+    def has_full_endpoint(url: str) -> bool:
+        """
+        检测URL是否已包含完整的endpoint路径
+
+        Args:
+            url: 待检测的URL
+
+        Returns:
+            True表示已包含完整endpoint, False表示是base URL
+        """
+        url_lower = url.lower()
+        for endpoint in URLNormalizer.KNOWN_ENDPOINTS:
+            if url_lower.endswith(endpoint):
+                return True
+        return False
+
+    @staticmethod
+    def normalize_url(url: str, interface_type: str) -> str:
+        """
+        规范化URL,确保包含完整的endpoint路径
+
+        Args:
+            url: 原始URL (可能是base URL或完整URL)
+            interface_type: 接口类型 (openai/anthropic)
+
+        Returns:
+            规范化后的完整URL
+        """
+        # 如果URL已包含完整endpoint,直接返回
+        if URLNormalizer.has_full_endpoint(url):
+            return url
+
+        # 根据接口类型确定endpoint
+        endpoint_map = {
+            "openai": "/chat/completions",
+            "anthropic": "/messages"
+        }
+        endpoint = endpoint_map.get(interface_type.lower(), "/chat/completions")
+
+        # 处理包含查询参数的URL (如Azure)
+        parsed = urlparse(url)
+
+        # 规范化路径部分
+        path = parsed.path.rstrip("/")
+
+        # 如果路径不包含endpoint，则拼接
+        if not any(path.endswith(ep) for ep in URLNormalizer.KNOWN_ENDPOINTS):
+            path = f"{path}{endpoint}"
+
+        # 重建URL，保留查询参数
+        normalized_url = urlunparse((
+            parsed.scheme,
+            parsed.netloc,
+            path,
+            parsed.params,
+            parsed.query,  # 保留查询参数
+            parsed.fragment
+        ))
+
+        return normalized_url
+
+    @staticmethod
+    def validate_url_format(url: str) -> None:
+        """
+        验证URL格式是否有效
+
+        Args:
+            url: 待验证的URL
+
+        Raises:
+            ValueError: URL格式无效
+        """
+        if not url:
+            raise ValueError("URL不能为空")
+
+        # 基本的URL格式验证
+        if not (url.startswith("http://") or url.startswith("https://")):
+            raise ValueError(
+                f"URL格式无效: 必须以 http:// 或 https:// 开头\n"
+                f"当前值: {url}"
+            )
+
+        # 检查URL中是否包含域名
+        parsed = urlparse(url)
+        if not parsed.netloc:
+            raise ValueError(
+                f"URL格式无效: 缺少域名\n"
+                f"当前值: {url}"
+            )
 
 
 @dataclass
@@ -25,6 +128,15 @@ class APIConfig:
     apikey: str = ""
     model: str = ""
     interface_type: str = "openai"  # openai 或 anthropic
+
+    def get_normalized_url(self) -> str:
+        """
+        获取规范化后的URL（包含完整endpoint路径）
+
+        Returns:
+            规范化后的完整URL
+        """
+        return URLNormalizer.normalize_url(self.url, self.interface_type)
 
 
 @dataclass
@@ -52,6 +164,21 @@ class Config:
 
         if not self.api.url:
             raise ValueError("url不能为空")
+
+        # 验证URL格式
+        try:
+            URLNormalizer.validate_url_format(self.api.url)
+        except ValueError as e:
+            raise ValueError(f"URL验证失败: {str(e)}")
+
+        # 检查URL是否被规范化，记录提示
+        normalized = URLNormalizer.normalize_url(self.api.url, self.api.interface_type)
+        if normalized != self.api.url:
+            logger.warning(
+                f"URL已自动规范化:\n"
+                f"  原始URL: {self.api.url}\n"
+                f"  规范化后: {normalized}"
+            )
 
         if not self.api.apikey:
             raise ValueError("apikey不能为空")
