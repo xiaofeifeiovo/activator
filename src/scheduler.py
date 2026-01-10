@@ -134,19 +134,20 @@ class ActivatorScheduler:
                     timeout=interval_seconds
                 )
 
-                # 发送激活请求
-                await self.send_activation()
-
-            except asyncio.TimeoutError:
-                # 正常超时，继续下一次循环
-                continue
             except asyncio.CancelledError:
-                # 任务被取消
+                # 任务被取消（收到退出信号）
                 break
+            except asyncio.TimeoutError:
+                # 正常超时，继续发送请求
+                pass
             except Exception as e:
                 logger.error(f"调度器错误: {str(e)}")
                 # 等待一段时间后继续
                 await asyncio.sleep(60)
+                continue
+
+            # 发送激活请求
+            await self.send_activation()
 
         logger.info("调度器已停止")
 

@@ -4,24 +4,19 @@
 # 激活器配置
 activator:
   # 请求发送间隔（小时）
-  # 例如: 3.0 表示每3小时发送一次请求
-  interval: 3.0
+  # 例如: 5.0 表示每5小时发送一次请求
+  interval: 5.0  # 每5小时发送一次请求
 
   # 单次请求的token数
   # 使用 "the " 填充来达到指定的token数
-  tokens: 1000
+  tokens: 1
 
 # API配置
 api:
-  # API端点URL - 支持两种格式
-  # 1. Base URL (推荐): 程序会自动根据接口类型补全endpoint
-  #    OpenAI: https://api.openai.com/v1 或 https://api.openai.com/v1/
-  #    Anthropic: https://api.anthropic.com/v1 或 https://api.anthropic.com/v1/
-  # 2. 完整URL: 直接指定完整的endpoint路径
-  #    OpenAI: https://api.openai.com/v1/chat/completions
-  #    Anthropic: https://api.anthropic.com/v1/messages
-  # Azure示例: https://your-resource.openai.azure.com/openai/deployments/your-deployment/chat/completions?api-version=2023-05-15
-  url: "https://api.openai.com/v1"
+  # API端点URL
+  # OpenAI示例: https://api.openai.com/v1/chat/completions
+  # 智谱AI: https://open.bigmodel.cn/api/paas/v4/chat/completions
+  url: "https://open.bigmodel.cn/api/coding/paas/v4/chat/completions"
 
   # API密钥
   # 请替换为您自己的API密钥
@@ -29,11 +24,12 @@ api:
 
   # 模型名称
   # OpenAI示例: gpt-4, gpt-3.5-turbo
-  # Anthropic示例: claude-3-opus-20240229
-  model: "gpt-4"
+  # 智谱AI: glm-4, glm-4-flash, glm-4-plus
+  model: "glm-4.7"
 
   # 接口类型
   # 可选值: openai, anthropic
+  # 智谱AI使用 OpenAI 兼容接口
   interface_type: "openai"
 
 # 日志配置
